@@ -19,10 +19,8 @@ class ValidityTester(object): #检测代理有效性
     def __init__(self):
         self._raw_proxies = None #定义默认为空的初始值
         self._usable_proxies = [] #定义默认为空的结果，数据结构为列表
+        self._conn = RedisClient()
 
-    def set_raw_proxies(self, proxies):
-        self._raw_proxies = proxies #从数据库里拿出一组代理放进去，由调度对象执行
-        self._conn = RedisClient() #创建数据库对象
 
     async def test_single_proxy(self, proxy): #定义测试单个代理的协程，参数在扔进循环的时候放入
         """
@@ -45,14 +43,14 @@ class ValidityTester(object): #检测代理有效性
             print(s)
             pass
 
-    def test(self):#并发测试代理
+    def test(self, proxies):#并发测试代理
         """
         aio test all proxies.
         """
         print('ValidityTester is working')
         try:
             loop = asyncio.get_event_loop()
-            tasks = [self.test_single_proxy(proxy) for proxy in self._raw_proxies]#把代理一个个都放入测试的协程，扔进循环事件实现并发测试
+            tasks = [self.test_single_proxy(proxy) for proxy in proxies]#把代理一个个都放入测试的协程，扔进循环事件实现并发测试
             loop.run_until_complete(asyncio.wait(tasks))
         except ValueError:
             print('Async Error') #捕捉无效参数报错
@@ -86,8 +84,7 @@ class PoolAdder(object): #获取新代理，放入代理池
                 callback = self._crawler.__CrawlFunc__[callback_label]#按索引取出爬取函数
                 raw_proxies = self._crawler.get_raw_proxies(callback)#用函数名调用函数并拿到返回的代理列表
                 # test crawled proxies
-                self._tester.set_raw_proxies(raw_proxies)#把拿到的代理放入有效性测试接收代理的接口
-                self._tester.test()#启动测试，合格的会被自动放入数据库
+                self._tester.test(raw_proxies)#启动测试，合格的会被自动放入数据库
                 proxy_count += len(raw_proxies)#拿到的代理总数
                 if self.is_over_threshold():#检测数据量的代理数量是否溢出
                     print('IP is enough, waiting to be used')
