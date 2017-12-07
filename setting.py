@@ -1,9 +1,9 @@
 # Redis数据库的地址和端口
 HOST = 'localhost'
-PORT = 6379
+PORT = 6666
 
 # 如果Redis有密码，则添加这句密码，否则设置为None或''
-PASSWORD = 'foob​​ared '
+PASSWORD = '118667'
 
 # 获得代理测试时间界限
 get_proxy_timeout = 9

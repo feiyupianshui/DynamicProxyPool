@@ -6,10 +6,10 @@ try:
     from aiohttp.errors import ProxyConnectionError,ServerDisconnectedError,ClientResponseError,ClientConnectorError
 except:
     from aiohttp import ClientProxyConnectionError as ProxyConnectionError,ServerDisconnectedError,ClientResponseError,ClientConnectorError
-from proxypool.db import RedisClient
-from proxypool.error import ResourceDepletionError
-from proxypool.getter import FreeProxyGetter
-from proxypool.setting import *
+from db import RedisClient
+from error import ResourceDepletionError
+from getter import FreeProxyGetter
+from setting import *
 from asyncio import TimeoutError
 
 

@@ -1,5 +1,5 @@
-from proxypool.api import app
-from proxypool.schedule import Schedule
+from api import app
+from schedule import Schedule
 
 def main():
 
