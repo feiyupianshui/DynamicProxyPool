@@ -1,77 +1,83 @@
-from utils import get_page
+#!/use/bin/env python
+#_*_coding:utf-8_*_
+
+import requests
 from pyquery import PyQuery as pq
 import re
+from requests.exceptions import ConnectionError
 
 
-class ProxyMetaclass(type):#定义能通过一个指定的属性名称拿到类函数名列表和数量
-    """
-        元类，在FreeProxyGetter类中加入
-        __CrawlFunc__和__CrawlFuncCount__
-        两个参数，分别表示爬虫函数，和爬虫函数的数量。
-    """
-    def __new__(cls, name, bases, attrs):#参数attrs是类的方法合集
-        count = 0
-        attrs['__CrawlFunc__'] = [] #这个key的value是个列表
-        for k, v in attrs.items(): #迭代所有方法
-            if 'crawl_' in k: #如果方法名是以crawl_开头的
-                attrs['__CrawlFunc__'].append(k) #作为这个key的value放入列表，注意append是个列表方法
-                count += 1 #每放一个计数增加1
-        attrs['__CrawlFuncCount__'] = count #最后的计数就是整数
+class ProxyMetaclass(type):
+    def __new__(cls, name, bases, attrs):
+        """
+        :param cls: 当前类对象
+        :param name: 类名
+        :param bases: 父类集合
+        :param attrs: 类方法合集
+        :return: 增加返回爬虫函数名和数量的类属性
+        """
+
         return type.__new__(cls, name, bases, attrs)
 
-
 class FreeProxyGetter(object, metaclass=ProxyMetaclass):
-    def get_raw_proxies(self, callback):#定义能通过名字调用下面这些爬虫函数的方法
-        proxies = []
-        print('Callback', callback)
-        for proxy in eval("self.{}()".format(callback)): #将字符串str当成有效的表达式来求值并返回计算结果
-            print('Getting', proxy, 'from', callback)
-            proxies.append(proxy) #把拿到的代理都放入准备好的空列表
-        return proxies #以列表形式返回爬到的所有代理
+    def callback(self, fun_name):
+        proxys = []
+        for proxy in eval('self.{}()'.format(fun_name)):
+            proxys.append(proxy)
+        return proxys
+
+    def get_page(self, url, options={}):
+        base_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'zh-CN,zh;q=0.9'
+        }
+        headers = dict(base_headers, **options)
+        try:
+            response = requests.get(url, headers=headers) # 太久不写，连get都忘了
+            if response.status_code == 200: # 连status_code都会错写成status
+                # response.encoding = 'UTF-8' # 输出中文乱码了就去确认一下网页编码gb2312 or utf-8
+                return response.text
+        except ConnectionError:
+            print('Requests '+url+' failed.')
+            return None
 
     def crawl_ip181(self):
-        start_url = 'http://www.ip181.com/'
-        html = get_page(start_url)
-        ip_adress = re.compile('<tr.*?>\s*<td>(.*?)</td>\s*<td>(.*?)</td>')
-        # \s* 匹配空格，起到换行作用
-        re_ip_adress = ip_adress.findall(html)
-        for adress,port in re_ip_adress:
-            result = adress + ':' + port
-            yield result.replace(' ', '')
-
+        for i in range(1, 4):
+            start_url = 'http://www.ip181.com/daili/{}.html'.format(i)
+            r = self.get_page(start_url)
+            rule = re.compile('<tr class="warning"*?>\s*<td>(.*?)</td>\s*<td>(.*?)</td>') # 示例代码没有去表头
+            ip_list = rule.findall(r)
+            for host, port in ip_list:
+                ip_adress = host + ':' + port
+                yield ip_adress.replace(' ', '') # 去空格是对正则结果最后的尊重
 
     def crawl_ip3366(self):
-        for page in range(1, 4):
-            start_url = 'http://www.ip3366.net/free/?stype=1&page={}'.format(page)
-            html = get_page(start_url)
-            ip_adress = re.compile('<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>')
-            # \s * 匹配空格，起到换行作用
-            re_ip_adress = ip_adress.findall(html)
-            for adress, port in re_ip_adress:
-                result = adress+':'+ port
-                yield result.replace(' ', '')
+        for i in range(1, 4):
+            start_url = 'http://www.ip3366.net/free/?stype=1&page={}'.format(i)
+            r = self.get_page(start_url)
+            rule = re.compile('<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>')
+            ip_list = rule.findall(r)
+            for host, port in ip_list:
+                ip_adress = host + ':' + port
+                yield ip_adress.replace(' ', '')
 
-
-    def crawl_daili66(self, page_count=4):
-        start_url = 'http://www.66ip.cn/{}.html'
-        urls = [start_url.format(page) for page in range(1, page_count + 1)]
-        for url in urls:
-            print('Crawling', url)
-            html = get_page(url)
-            if html:
-                doc = pq(html)
-                trs = doc('.containerbox table tr:gt(0)').items()
-                for tr in trs:
-                    ip = tr.find('td:nth-child(1)').text()
-                    port = tr.find('td:nth-child(2)').text()
-                    yield ':'.join([ip, port])
-
+    def crawl_66ip(self):
+        for i in range(1, 4):
+            start_url = 'http://www.66ip.cn/areaindex_21/{}.html'.format(i)#只要了四川的代理，每页数量也更多
+            r = self.get_page(start_url)
+            doc = pq(r)
+            lis = doc('.containerbox table tr:gt(0)').items()
+            for tr in lis:
+                host = tr.find('td:nth-child(1)').text()
+                port = tr.find('td:nth-child(2)').text()
+                yield ':'.join([host, port])
 
     def crawl_goubanjia(self):
-        start_url = 'http://www.goubanjia.com/free/gngn/index.shtml'
-        html = get_page(start_url)
-        if html:
-            doc = pq(html)
+        for i in range(1, 4):
+            start_url = 'http://www.goubanjia.com/free/gngn/index{}.shtml'.format(i)
+            r = self.get_page(start_url)
+            doc = pq(r)
             tds = doc('td.ip').items()
             for td in tds:
                 td.find('p').remove()
@@ -80,24 +86,19 @@ class FreeProxyGetter(object, metaclass=ProxyMetaclass):
     def crawl_data5u(self):
         for i in ['gngn', 'gnpt']:
             start_url = 'http://www.data5u.com/free/{}/index.shtml'.format(i)
-            html = get_page(start_url)
-            ip_adress = re.compile(' <ul class="l2">\s*<span><li>(.*?)</li></span>\s*<span style="width: 100px;"><li class=".*">(.*?)</li></span>')
-            # \s * 匹配空格，起到换行作用
-            re_ip_adress = ip_adress.findall(html)
-            for adress, port in re_ip_adress:
-                result = adress+':'+port
-                yield result.replace(' ','')
+            r = self.get_page(start_url)
+            rule = re.compile(' <ul class="l2">\s*<span><li>(.*?)</li></span>\s*<span style="width: 100px;"><li class=".*?">(.*?)</li></span>')
+            ip_list = rule.findall(r)
+            for host, port in ip_list:
+                ip_address = host + ':' + port
+                yield ip_address.replace(' ', '')
 
     def crawl_kxdaili(self):
         for i in range(1, 4):
             start_url = 'http://www.kxdaili.com/ipList/{}.html#ip'.format(i)
-            html = get_page(start_url)
-            ip_adress = re.compile('<tr.*?>\s*<td>(.*?)</td>\s*<td>(.*?)</td>')
-            # \s* 匹配空格，起到换行作用
-            re_ip_adress = ip_adress.findall(html)
-            for adress, port in re_ip_adress:
-                result = adress + ':' + port
-                yield result.replace(' ', '')
-
-
-
+            r = self.get_page(start_url)
+            rule = re.compile('<tr.*?>\s*<td>(.*?)</td>\s*<td>(.*?)</td>')
+            ip_list = rule.findall(r)
+            for host, port in ip_list:
+                ip_adress = host + ':' + port
+                yield ip_adress.replace(' ', '')
