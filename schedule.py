@@ -1,96 +1,37 @@
 import time
-from multiprocessing import Process #多进程
-import asyncio #支持异步IO的协程模块
-import aiohttp
-try:
-    from aiohttp.errors import ProxyConnectionError,ServerDisconnectedError,ClientResponseError,ClientConnectorError
-except:
-    from aiohttp import ClientProxyConnectionError as ProxyConnectionError,ServerDisconnectedError,ClientResponseError,ClientConnectorError
-from db import RedisClient
-from error import ResourceDepletionError
-from getter import FreeProxyGetter
-from setting import *
-from asyncio import TimeoutError
+from multiprocessing import Process
+from .db import RedisClient
+from .error import ResourceDepletionError
+from .getter import FreeProxyGetter
+from .setting import *
+from .validator import ValidityTester
 
 
-class ValidityTester(object): #检测代理有效性
-    test_api = TEST_API #来自setting文件
+class PoolAdder(object):
 
     def __init__(self):
-        self._raw_proxies = None #定义默认为空的初始值
-        self._usable_proxies = [] #定义默认为空的结果，数据结构为列表
-        self._conn = RedisClient()
+        self.crawl = FreeProxyGetter()
+        self.conn = RedisClient()
+        self.tester = ValidityTester()
 
 
-    async def test_single_proxy(self, proxy): #定义测试单个代理的协程，参数在扔进循环的时候放入
-        """
-        text one proxy, if valid, put them to usable_proxies.
-        """
-        try:
-            async with aiohttp.ClientSession() as session:
-                try:
-                    if isinstance(proxy, bytes):
-                        proxy = proxy.decode('utf-8')
-                    real_proxy = 'http://' + proxy #检查并规范待检测代理的格式
-                    print('Testing', proxy)                             #请求超时时间来自setting文件手动指定
-                    async with session.get(self.test_api, proxy=real_proxy, timeout=get_proxy_timeout) as response: #定义发起异步HTTP请求的协程
-                        if response.status == 200:
-                            self._conn.put(proxy) #有响应的就放入数据库
-                            print('Valid proxy', proxy) #并在控制台返回
-                except (ProxyConnectionError, TimeoutError, ValueError):#python自带异常，传入无效参数时会报ValueError
-                    print('Invalid proxy', proxy) #连接各种报错的就打印出来说一下
-        except (ServerDisconnectedError, ClientResponseError,ClientConnectorError) as s:#层层捕捉可能出现的报错
-            print(s)
-            pass
 
-    def test(self, proxies):#并发测试代理
-        """
-        aio test all proxies.
-        """
-        print('ValidityTester is working')
-        try:
-            loop = asyncio.get_event_loop()
-            tasks = [self.test_single_proxy(proxy) for proxy in proxies]#把代理一个个都放入测试的协程，扔进循环事件实现并发测试
-            loop.run_until_complete(asyncio.wait(tasks))
-        except ValueError:
-            print('Async Error') #捕捉无效参数报错
+    def put(self):
+        while not self.overflowed:
+            for i in range(self.crawl.__CrawlNum__):
+                func_name = self.crawl.__CrawlFunc__[i]
+                iterator = self.crawl.callback(func_name)
+                self.tester.test_all(iterator)
 
-
-class PoolAdder(object): #获取新代理，放入代理池
-    """
-    add proxy to pool
-    """
-
-    def __init__(self, threshold): #整合了三个工具（类）
-        self._threshold = threshold #代理队列数量上限，可在setting中导入然后传入
-        self._conn = RedisClient() #数据库对象
-        self._tester = ValidityTester() #测试代理有效性的对象
-        self._crawler = FreeProxyGetter() #爬取代理的对象
-
-    def is_over_threshold(self): #不让数据库数量溢出，保持小于上限
-        """
-        judge if count is overflow.
-        """
-        if self._conn.queue_len >= self._threshold:
+    @property
+    def overflowed(self):
+        if self.conn.length >= OVERFLOW:
             return True
         else:
             return False
 
-    def add_to_queue(self):#获取新的代理队列
-        print('PoolAdder is working')
-        proxy_count = 0 #新队列初始个数设为0
-        while not self.is_over_threshold(): #如果没有溢出
-            for callback_label in range(self._crawler.__CrawlFuncCount__):#循环函数总数量，用索引到列表里调函数名
-                callback = self._crawler.__CrawlFunc__[callback_label]#按索引取出爬取函数
-                raw_proxies = self._crawler.get_raw_proxies(callback)#用函数名调用函数并拿到返回的代理列表
-                # test crawled proxies
-                self._tester.test(raw_proxies)#启动测试，合格的会被自动放入数据库
-                proxy_count += len(raw_proxies)#拿到的代理总数
-                if self.is_over_threshold():#检测数据量的代理数量是否溢出
-                    print('IP is enough, waiting to be used')
-                    break
-            if proxy_count == 0:
-                raise ResourceDepletionError#这是一个都没爬到？
+
+
 
 
 class Schedule(object):

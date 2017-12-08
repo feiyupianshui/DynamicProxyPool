@@ -1,52 +1,35 @@
 import redis
-from error import PoolEmptyError
-from setting import HOST, PORT, PASSWORD
-
+from .setting import HOST, PORT, DATABASE, PASSWORD
+from .error import PoolEmptyError
 
 class RedisClient(object):
-    def __init__(self, host=HOST, port=PORT):
+    def __init__(self): # 这里可以不用传参，设置里的变量可以直接用
         if PASSWORD:
-            self._db = redis.Redis(host=host, port=port, password=PASSWORD, db=1)#连接redis并生成对象
+            self.client = redis.Redis(host=HOST, port=PORT, db=DATABASE, password=PASSWORD, decode_responses=True)
         else:
-            self._db = redis.Redis(host=host, port=port, db=1)
+            self.client = redis.Redis(host=HOST, port=PORT, db=DATABASE, decode_responses=True)#不改为True就存为字节类型
 
-    def get(self, count=1):#拿出来
-        """
-        get proxies from redis
-        """
-        proxies = self._db.lrange("proxies", 0, count - 1)
-        self._db.ltrim("proxies", count, -1) #修剪列表，只保留指定区间的值
-        return proxies
+    def push(self, proxy):
+        self.client.rpush('proxies', proxy)
 
-    def put(self, proxy):#放进去
-        """
-        add proxy to right top
-        """
-        self._db.rpush("proxies", proxy)
+    def get(self, count=1): # 默认取一个
+        part = self.client.lrange('proxies', 0, count-1)
+        self.client.ltrim('proxies', count, -1)
+        return part
 
-    def pop(self):#扔了
-        """
-        get proxy from right.
-        """
+    def pop(self):
         try:
-            return self._db.rpop("proxies").decode('utf-8')
+            return self.client.rpop('proxies')
         except:
-            raise PoolEmptyError
+            return PoolEmptyError
 
     @property
-    def queue_len(self):#返回长度
-        """
-        get length from queue.
-        """
-        return self._db.llen("proxies")
+    def length(self):
+        return self.client.llen('proxies')
 
-    def flush(self):#刷新
-        """
-        flush db
-        """
-        self._db.flushall()
+    def flush(self):
+        self.client.flushall('proxies')
 
-
-if __name__ == '__main__':#这个应该是调试用的
+if __name__ == '__main__':
     conn = RedisClient()
     print(conn.pop())

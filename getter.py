@@ -14,9 +14,15 @@ class ProxyMetaclass(type):
         :param name: 类名
         :param bases: 父类集合
         :param attrs: 类方法合集
-        :return: 增加返回爬虫函数名和数量的类属性
+        :return: 增加返回爬虫函数名和数量的类属性(可通过实例调用）
         """
-
+        attrs['__CrawlFunc__'] = []
+        count = 0
+        for k, v in attrs.items():
+            if "crawl_" in k:
+                attrs['__CrawlFunc__'].append(k)
+                count += 1
+        attrs['__CrawlNum__'] = count
         return type.__new__(cls, name, bases, attrs)
 
 class FreeProxyGetter(object, metaclass=ProxyMetaclass):
