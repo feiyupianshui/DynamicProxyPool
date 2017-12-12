@@ -14,3 +14,8 @@ TEST_TIME = 9
 
 # 数据库代理数量上限
 OVERFLOW = 100
+FLOOR = 20
+
+# 检查休眠时间
+CHECK_POOL_CYCLE = 180
+VALID_PROXY_CYCLE = 120

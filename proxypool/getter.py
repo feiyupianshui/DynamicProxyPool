@@ -108,3 +108,4 @@ class FreeProxyGetter(object, metaclass=ProxyMetaclass):
             for host, port in ip_list:
                 ip_adress = host + ':' + port
                 yield ip_adress.replace(' ', '')
+

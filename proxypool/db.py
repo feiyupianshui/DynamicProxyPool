@@ -1,6 +1,8 @@
 import redis
-from .setting import HOST, PORT, DATABASE, PASSWORD
+
+from proxypool.setting import HOST, PORT, DATABASE, PASSWORD
 from .error import PoolEmptyError
+
 
 class RedisClient(object):
     def __init__(self): # 这里可以不用传参，设置里的变量可以直接用

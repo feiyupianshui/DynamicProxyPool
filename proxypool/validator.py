@@ -1,13 +1,15 @@
 #!/use/bin/env python
 #_*_coding:utf-8_*_
 
+import asyncio
+from asyncio import TimeoutError
+
 import aiohttp
 from aiohttp import ClientConnectionError as ClientProxyConnectionError, ClientConnectorError, ServerDisconnectedError
 from aiohttp import ClientResponseError
-from .db import RedisClient
+
+from proxypool.db import RedisClient
 from .setting import *
-import asyncio
-from asyncio import TimeoutError
 
 
 class ValidityTester(object):
