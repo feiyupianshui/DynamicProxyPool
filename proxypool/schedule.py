@@ -65,8 +65,8 @@ class Schedule(object):
 
     def run(self): # 用子进程跑检查和验证程序
         print('Ip processing running')
-        valid_process = Process(target=Schedule.valid_proxy)
+        # valid_process = Process(target=Schedule.valid_proxy)
         check_process = Process(target=Schedule.check_pool)
-        valid_process.start()
+        # valid_process.start()
         check_process.start()
 

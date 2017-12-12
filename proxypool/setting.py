@@ -12,7 +12,7 @@ TEST_URL = "https://www.baidu.com/"
 # 测试代理的超时时间
 TEST_TIME = 9
 
-# 数据库代理数量上限
+# 数据库代理数量上下限，即数量在20-200之间的话，不会添加
 OVERFLOW = 100
 FLOOR = 20
 
