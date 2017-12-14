@@ -1,10 +1,10 @@
 # Redis数据库的地址和端口
 HOST = 'localhost'
-PORT = 6666
+PORT =
 DATABASE = 1
 
 # 如果Redis有密码，则添加这句密码，否则设置为None或''
-PASSWORD = '118667'
+PASSWORD = ''
 
 # 测试代理的网站
 TEST_URL = "https://www.baidu.com/"
