@@ -85,3 +85,29 @@ def get_proxy():
   * class proxypool.db.RedisClient
 
     > 数据库操作类，维持与Redis的连接和对数据库的增删改查
+
+* error.py
+
+  > 异常模块
+
+  * class proxypool.error.ResourceDepletionError
+
+    > 资源枯竭异常，如果从所有抓取网站都抓不到可用的代理资源，
+    >
+    > 则抛出此异常。
+
+  * class proxypool.error.PoolEmptyError
+
+    > 代理池空异常，如果代理池长时间为空，则抛出此异常。
+
+* api.py
+
+  > API模块，启动一个Web服务器，使用Flask实现，对外提供代理的获取功能。
+
+* utils.py
+
+  > 工具箱
+
+* setting.py
+
+  > 设置
