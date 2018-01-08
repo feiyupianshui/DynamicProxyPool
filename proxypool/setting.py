@@ -19,3 +19,5 @@ FLOOR = 20
 # 检查休眠时间
 CHECK_POOL_CYCLE = 20
 VALID_PROXY_CYCLE = 600
+
+REDIS_KEY = 'proxies'

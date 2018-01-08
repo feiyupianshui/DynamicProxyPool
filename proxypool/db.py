@@ -1,6 +1,6 @@
 import redis
 
-from proxypool.setting import HOST, PORT, DATABASE, PASSWORD
+from proxypool.setting import HOST, PORT, DATABASE, PASSWORD, REDIS_KEY
 from .error import PoolEmptyError
 
 
@@ -11,8 +11,18 @@ class RedisClient(object):
         else:
             self.client = redis.Redis(host=HOST, port=PORT, db=DATABASE, decode_responses=True)#不改为True就存为字节类型
 
-    def push(self, proxy):
-        self.client.rpush('proxies', proxy)
+    def add(self, proxy, score=INITIAL_SCORE):
+        """
+        添加代理，设置分数为最高
+        :param proxy: 代理
+        :param score: 分数
+        :return: 添加结果
+        """
+        if not re.match('\d+\.\d+\.\d+\.\d+\:\d+', proxy):
+            print('代理不符合规范', proxy, '丢弃')
+            return
+        if not self.db.zscore(REDIS_KEY, proxy):
+            return self.db.zadd(REDIS_KEY, score, proxy)
 
     def get(self, count=1): # 默认取一个
         part = self.client.lrange('proxies', 0, count-1)
