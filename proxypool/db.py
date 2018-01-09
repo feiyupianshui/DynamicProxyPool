@@ -24,10 +24,20 @@ class RedisClient(object):
         if not self.db.zscore(REDIS_KEY, proxy):
             return self.db.zadd(REDIS_KEY, score, proxy)
 
-    def get(self, count=1): # 默认取一个
-        part = self.client.lrange('proxies', 0, count-1)
-        self.client.ltrim('proxies', count, -1)
-        return part
+    def random(self):
+        """
+        随机获取有效代理，首先尝试获取最高分数代理，如果不存在，按照排名获取，否则异常
+        :return: 随机代理
+        """
+        result = self.db.zrangebyscore(REDIS_KEY, MAX_SCORE, MAX_SCORE)
+        if len(result):
+            return choice(result)
+        else:
+            result = self.db.zrevrange(REDIS_KEY, 0, 100)
+            if len(result):
+                return choice(result)
+            else:
+                raise PoolEmptyError
 
     def pop(self):
         try:
