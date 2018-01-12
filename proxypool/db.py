@@ -61,9 +61,14 @@ class RedisClient(object):
             """
             return not self.db.zscore(REDIS_KEY, proxy) == None
 
-    @property
-    def length(self):
-        return self.client.llen('proxies')
+    def max(self, proxy):
+        """
+        将代理设置为MAX_SCORE
+        :param proxy: 代理
+        :return: 设置结果
+        """
+        print('代理', proxy, '可用，设置为', MAX_SCORE)
+        return self.db.zadd(REDIS_KEY, MAX_SCORE, proxy)
 
     def flush(self):
         self.client.flushall('proxies')
