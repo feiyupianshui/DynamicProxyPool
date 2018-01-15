@@ -70,9 +70,12 @@ class RedisClient(object):
         print('代理', proxy, '可用，设置为', MAX_SCORE)
         return self.db.zadd(REDIS_KEY, MAX_SCORE, proxy)
 
-    def flush(self):
-        self.client.flushall('proxies')
-
+    def count(self):
+        """
+        获取数量
+        :return: 数量
+        """
+        return self.db.zcard(REDIS_KEY)
 if __name__ == '__main__':
     conn = RedisClient()
     print(conn.pop())
