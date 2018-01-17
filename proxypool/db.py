@@ -82,6 +82,17 @@ class RedisClient(object):
         :return: 全部代理列表
         """
         return self.db.zrangebyscore(REDIS_KEY, MIN_SCORE, MAX_SCORE)
+
+    def batch(self, start, stop):
+        """
+        批量获取
+        :param start: 开始索引
+        :param stop: 结束索引
+        :return: 代理列表
+        """
+        return self.db.zrevrange(REDIS_KEY, start, stop - 1)
+
+
 if __name__ == '__main__':
     conn = RedisClient()
     print(conn.pop())
