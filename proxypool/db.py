@@ -5,11 +5,8 @@ from .error import PoolEmptyError
 
 
 class RedisClient(object):
-    def __init__(self): # 这里可以不用传参，设置里的变量可以直接用
-        if PASSWORD:
-            self.client = redis.Redis(host=HOST, port=PORT, db=DATABASE, password=PASSWORD, decode_responses=True)
-        else:
-            self.client = redis.Redis(host=HOST, port=PORT, db=DATABASE, decode_responses=True)#不改为True就存为字节类型
+    def __init__(self, host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD):
+        self.db = redis.StrictRedis(host=host, port=port, password=password, decode_responses=True)
 
     def add(self, proxy, score=INITIAL_SCORE):
         """
@@ -92,7 +89,7 @@ class RedisClient(object):
         """
         return self.db.zrevrange(REDIS_KEY, start, stop - 1)
 
-
 if __name__ == '__main__':
     conn = RedisClient()
-    print(conn.pop())
+    result = conn.batch(680, 688)
+    print(result)
