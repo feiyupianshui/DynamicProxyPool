@@ -2,6 +2,8 @@ import redis
 
 from proxypool.setting import HOST, PORT, DATABASE, PASSWORD, REDIS_KEY
 from .error import PoolEmptyError
+from random import choice
+import re
 
 
 class RedisClient(object):
