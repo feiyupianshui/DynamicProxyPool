@@ -1,11 +1,14 @@
 
-from proxypool.api import app
-from proxypool.schedule import Schedule
+from proxypool.scheduler import Scheduler
+import sys
+import io
 
 def main():
-    s = Schedule()
-    s.run()
-    app.run()
+    try:
+        s = Scheduler()
+        s.run()
+    except:
+        main()
 
 
 if __name__ == '__main__':
