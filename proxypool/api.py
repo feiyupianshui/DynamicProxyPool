@@ -16,6 +16,16 @@ def get():
     con = get_conn()
     return con.pop()
 
+
+@app.route('/random')
+def get_proxy():
+    """
+    Get a proxy
+    :return: 随机代理
+    """
+    conn = get_conn()
+    return conn.random()
+
 @app.route('/count')
 def count():
     con = get_conn()
