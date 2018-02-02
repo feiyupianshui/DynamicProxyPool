@@ -27,9 +27,13 @@ def get_proxy():
     return conn.random()
 
 @app.route('/count')
-def count():
-    con = get_conn()
-    return str(con.length)
+def get_counts():
+    """
+    Get the count of proxies
+    :return: 代理池总量
+    """
+    conn = get_conn()
+    return str(conn.count())
 
 if __name__ == '__main__':
     app.run()
