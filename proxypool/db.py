@@ -52,13 +52,13 @@ class RedisClient(object):
             print('代理', proxy, '当前分数', score, '移除')
             return self.db.zrem(REDIS_KEY, proxy)
 
-        def exists(self, proxy):
-            """
-            判断是否存在
-            :param proxy: 代理
-            :return: 是否存在
-            """
-            return not self.db.zscore(REDIS_KEY, proxy) == None
+    def exists(self, proxy):
+        """
+        判断是否存在
+        :param proxy: 代理
+        :return: 是否存在
+        """
+        return not self.db.zscore(REDIS_KEY, proxy) == None
 
     def max(self, proxy):
         """
@@ -108,5 +108,6 @@ class RedisClient(object):
 
 if __name__ == '__main__':
     conn = RedisClient()
+    scan()
     result = conn.batch(680, 688)
     print(result)
