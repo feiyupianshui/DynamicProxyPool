@@ -109,3 +109,16 @@ class FreeProxyGetter(object, metaclass=ProxyMetaclass):
                 ip_adress = host + ':' + port
                 yield ip_adress.replace(' ', '')
 
+    def crawl_goubanjia(self):
+        """
+        获取Goubanjia
+        :return: 代理
+        """
+        start_url = 'http://www.goubanjia.com/free/gngn/index.shtml'
+        html = get_page(start_url)
+        if html:
+            doc = pq(html)
+            tds = doc('td.ip').items()
+            for td in tds:
+                td.find('p').remove()
+                yield td.text().replace(' ', '')
