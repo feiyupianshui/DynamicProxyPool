@@ -122,3 +122,12 @@ class FreeProxyGetter(object, metaclass=ProxyMetaclass):
             for td in tds:
                 td.find('p').remove()
                 yield td.text().replace(' ', '')
+
+    def crawl_proxy360(self):
+        """
+        获取Proxy360
+        :return: 代理
+        """
+        start_url = 'http://www.proxy360.cn/Region/China'
+        print('Crawling', start_url)
+        html = get_page(start_url)
