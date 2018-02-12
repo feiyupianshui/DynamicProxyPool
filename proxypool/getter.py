@@ -131,3 +131,10 @@ class FreeProxyGetter(object, metaclass=ProxyMetaclass):
         start_url = 'http://www.proxy360.cn/Region/China'
         print('Crawling', start_url)
         html = get_page(start_url)
+        if html:
+            doc = pq(html)
+            lines = doc('div[name="list_proxy_ip"]').items()
+            for line in lines:
+                ip = line.find('.tbBottomLine:nth-child(1)').text()
+                port = line.find('.tbBottomLine:nth-child(2)').text()
+                yield ':'.join([ip, port])
