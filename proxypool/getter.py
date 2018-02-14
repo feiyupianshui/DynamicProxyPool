@@ -48,25 +48,6 @@ class FreeProxyGetter(object, metaclass=ProxyMetaclass):
             print('Requests '+url+' failed.')
             return None
 
-    def crawl_ip181(self):
-        for i in range(1, 4):
-            start_url = 'http://www.ip181.com/daili/{}.html'.format(i)
-            r = self.get_page(start_url)
-            rule = re.compile('<tr class="warning"*?>\s*<td>(.*?)</td>\s*<td>(.*?)</td>') # 示例代码没有去表头
-            ip_list = rule.findall(r)
-            for host, port in ip_list:
-                ip_adress = host + ':' + port
-                yield ip_adress.replace(' ', '') # 去空格是对正则结果最后的尊重
-
-    def crawl_ip3366(self):
-        for i in range(1, 4):
-            start_url = 'http://www.ip3366.net/free/?stype=1&page={}'.format(i)
-            r = self.get_page(start_url)
-            rule = re.compile('<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>')
-            ip_list = rule.findall(r)
-            for host, port in ip_list:
-                ip_adress = host + ':' + port
-                yield ip_adress.replace(' ', '')
 
     def crawl_66ip(self):
         for i in range(1, 4):
@@ -147,3 +128,14 @@ class FreeProxyGetter(object, metaclass=ProxyMetaclass):
         """
         start_url = 'http://www.66ip.cn/{}.html'
         urls = [start_url.format(page) for page in range(1, page_count + 1)]
+        urls = [start_url.format(page) for page in range(1, page_count + 1)]
+        for url in urls:
+            print('Crawling', url)
+            html = get_page(url)
+            if html:
+                doc = pq(html)
+                trs = doc('.containerbox table tr:gt(0)').items()
+                for tr in trs:
+                    ip = tr.find('td:nth-child(1)').text()
+                    port = tr.find('td:nth-child(2)').text()
+                    yield ':'.join([ip, port])
